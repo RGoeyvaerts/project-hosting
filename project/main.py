@@ -31,6 +31,7 @@ def get_db():
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+
 @app.post("/token")
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
 
@@ -54,9 +55,16 @@ def read_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db), t
     users = crud_operations.get_users(db, skip=skip, limit=limit)
     return users
 
+
 @app.post("/users/", response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = crud_operations.get_user_by_email(db, email=user.email)
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     return crud_operations.create_user(db=db, user=user)
+
+
+@app.put("/users", response_model=schemas.UserCreate)
+def change_password(user: schemas.UserCreate, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    db_user = crud_operations.get_user_by_email(db, email=user.email)
+    return crud_operations.set_password(db=db, user=user)
