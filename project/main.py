@@ -68,3 +68,5 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 def change_password(user: schemas.UserCreate, db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
     db_user = crud_operations.get_user_by_email(db, email=user.email)
     return crud_operations.set_password(db=db, user=user)
+
+
