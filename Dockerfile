@@ -1,4 +1,7 @@
 FROM python:3.10.0-slim
+RUN apt-get update
+RUN apt-get install git
+RUN git clone https://github.com/RGoeyvaerts/project-hosting
 WORKDIR /code
 EXPOSE 8000
 COPY ./requirements.txt /code/requirements.txt
