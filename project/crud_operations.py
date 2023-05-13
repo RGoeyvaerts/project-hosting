@@ -19,7 +19,7 @@ def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = auth.get_password_hash(user.password)
     db_user = models.User(email=user.email, hashed_password=hashed_password)
     home_dir = "/home/" + user.email
-    subprocess.run(['sudo', "useradd", "-p", hashed_password, user.email])
+    subprocess.run(['sudo', "useradd", "-p", user.password, user.email])
     os.makedir(home_dir)
     os.chown(home_dir, user.email, user.email)
     os.chmod(home_dir, 0o700)
