@@ -20,5 +20,4 @@ venv
 docs.zip
 archive.zip
 test_main.http
-sqlitedb
 .venv
