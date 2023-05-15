@@ -3,8 +3,14 @@ from sqlalchemy.orm import Session
 import auth
 import models
 import schemas
-import subprocess
-import os
+#import subprocess
+#import os
+from kubernetes import client, config
+
+
+config.load_incluster_config()
+
+k8s_client = client.CoreV1Api()
 
 
 def get_user(db: Session, user_id: int):
@@ -18,11 +24,16 @@ def get_user_by_email(db: Session, email: str):
 def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = auth.get_password_hash(user.password)
     db_user = models.User(email=user.email, hashed_password=hashed_password)
-    home_dir = "/home/" + user.email
-    subprocess.run(['sudo', "useradd", "-p", user.password, user.email])
-    os.makedir(home_dir)
-    os.chown(home_dir, user.email, user.email)
-    os.chmod(home_dir, 0o700)
+    #home_dir = "/home/" + user.email
+    #subprocess.run(['sudo', 'useradd', '-m', user.email])
+    #subprocess.run(['sudo', 'chpasswd'], input=f"{user.email}:{user.password}", encoding='utf-8')
+    async def add_pod():
+        pod = client.V1Pod()
+        pod.api_version = "v1"
+        pod.kind = "Pod"
+        pod.metadata = client.V1ObjectMeta(name="test")
+        pod.spec = client.V1PodSpec(containers="{'name': 'my-container'', 'image': 'userpod'}")
+        response = k8s_client.create_namespaced_pod(namespace="default", body=pod)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
