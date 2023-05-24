@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 import auth
 import models
 import schemas
+import subprocess
 
 
 def get_user(db: Session, user_id: int):
@@ -16,10 +17,27 @@ def get_user_by_email(db: Session, email: str):
 def create_user(db: Session, user: schemas.UserCreate):
     hashed_password = auth.get_password_hash(user.password)
     db_user = models.User(email=user.email, hashed_password=hashed_password)
+
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    return db_user
+    response = {'ansible_user': user.email,
+                'ansible_uid': db.query(models.User).filter(models.User.id == user.id),
+                'ansible_gid': db.query(models.User).filter(models.User.id == user.id),
+                'ansible_password': user.password}
+
+    playbook_path = "ansible/playbook.yml"
+    ansible_command = f"ansible-playbook {playbook_path} --extra-vars="
+    try:
+        # Execute the Ansible playbook command
+        subprocess.run(ansible_command, shell=True, check=True)
+        # Playbook executed successfully
+        return db_user
+    except subprocess.CalledProcessError as e:
+        # Playbook execution failed
+        # Handle the error appropriately (e.g., logging, error response, etc.)
+        # You can access the error message through e.stderr
+        raise Exception(f"Failed to run Ansible playbook: {e.stderr}")
 
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):
