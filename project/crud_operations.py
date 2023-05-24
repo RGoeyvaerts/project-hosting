@@ -3,8 +3,6 @@ from sqlalchemy.orm import Session
 import auth
 import models
 import schemas
-# import subprocess
-# import os
 
 
 def get_user(db: Session, user_id: int):
@@ -26,15 +24,15 @@ def create_user(db: Session, user: schemas.UserCreate):
 
 def get_users(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.User).offset(skip).limit(limit).all()
-    # home_dir = "/home/" + user.email
-    # subprocess.run(['sudo', 'useradd', '-m', user.email])
-    # subprocess.run(['sudo', 'chpasswd'], input=f"{user.email}:{user.password}", encoding='utf-8')
 
 
 def set_password(db: Session, user: schemas.UserCreate):
     hashed_password = auth.get_password_hash(user.password)
     user_db = db.query(models.User).filter(
         models.User.email == user.email).first()
+    if not user_db:
+        raise HTTPException(status_code=404, detail="User not found")
+
     user_db.hashed_password = hashed_password
     db.commit()
 
